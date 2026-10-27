@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ff5a5f">
+  <meta name="description" content="开心学单词 WordsFunny：面向孩子的趣味英语单词学习平台，含发音、闪卡、听音选词、看图配对、拼单词与记忆游戏，手机电脑都能玩。">
+  <title>开心学单词 · WordsFunny</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Baloo+2:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#/" aria-label="开心学单词 首页">
+      <span class="brand-blocks" aria-hidden="true"><b>A</b><b>B</b><b>C</b></span>
+      <span class="brand-text">
+        <strong>开心学单词</strong>
+        <small>WordsFunny</small>
+      </span>
+    </a>
+    <div class="topbar-right">
+      <div class="stars" id="starCount" title="收集到的星星">
+        <span class="star-ico" aria-hidden="true">★</span><span id="starNum">0</span>
+      </div>
+      <button class="sound-toggle" id="soundToggle" type="button" aria-pressed="true">
+        <span aria-hidden="true">🔊</span> 发音开
+      </button>
+    </div>
+  </header>
+
+  <main id="app">
+    <!-- 视图由 app.js 渲染 -->
+  </main>
+
+  <footer class="sitefoot">
+    <p>开心学单词 · 一个免费、原创、可离线朗读的儿童英语单词乐园。</p>
+    <p class="sitefoot-sub">灵感来源于开源项目 WordsFunny，内容与界面为本站重新设计。</p>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="words.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
