@@ -15,6 +15,17 @@
     { id: "memory", name: "记忆配对", emoji: "🧠" }
   ];
 
+  /* 考试词库（分级单词）状态 */
+  let LEVELS = [];
+  let LEVELS_SAMPLE = false;
+  const vocabCache = {};
+  const levelById = (id) => LEVELS.find((l) => l.id === id);
+  const learnedSet = (id) => {
+    try { return new Set(JSON.parse(localStorage.getItem("wf_v_" + id) || "[]")); }
+    catch (e) { return new Set(); }
+  };
+  const saveLearned = (id, set) => localStorage.setItem("wf_v_" + id, JSON.stringify([...set]));
+
   const store = {
     get stars() { return Number(localStorage.getItem("wf_stars") || 0); },
     set stars(v) { localStorage.setItem("wf_stars", String(v)); },
@@ -104,6 +115,8 @@
     const parts = location.hash.replace(/^#\/?/, "").split("/").filter(Boolean);
     if (parts[0] === "deck" && deckById(parts[1])) {
       renderDeck(parts[1], parts[2] || "flash");
+    } else if (parts[0] === "level" && parts[1]) {
+      renderLevel(parts[1]);
     } else {
       renderHome();
     }
@@ -114,7 +127,15 @@
   /* ---------- init ---------- */
   renderStars();
   syncSoundBtn();
-  route();
+  boot();
+
+  function boot() {
+    fetch("data/levels.json")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => { if (j && j.levels) { LEVELS = j.levels; LEVELS_SAMPLE = !!j.sample; } })
+      .catch(() => {})
+      .finally(route);
+  }
 
   /* ---------- home ---------- */
   function renderHome() {
@@ -167,11 +188,39 @@
       <div class="howto">
         <h2>五种玩法，怎么玩？</h2>
         <div class="howto-list">${howto}</div>
-      </div>`;
+      </div>
+      ${levelsSection()}`;
 
     app.querySelectorAll("[data-deck]").forEach((el) => {
       el.addEventListener("click", () => el.dataset.deck && go("#/deck/" + el.dataset.deck + "/flash"));
     });
+    app.querySelectorAll("[data-level]").forEach((el) => {
+      el.addEventListener("click", () => go("#/level/" + el.dataset.level));
+    });
+  }
+
+  function levelsSection() {
+    if (!LEVELS.length) return "";
+    const grand = LEVELS.reduce((n, l) => n + (l.total || 0), 0);
+    const cards = LEVELS.map((l) => {
+      const learned = learnedSet(l.id).size;
+      return `
+        <button class="level-card" style="--c:${l.color}" data-level="${l.id}">
+          <span class="level-emoji" aria-hidden="true">${l.emoji}</span>
+          <span class="level-body">
+            <span class="level-title">${esc(l.name)}</span>
+            <span class="level-en">${esc(l.en)} · ${l.total} 词</span>
+          </span>
+          <span class="level-meta">${learned ? "已学 " + learned : "开始学"}</span>
+        </button>`;
+    }).join("");
+    return `
+      <div class="sec-head" id="vocab">
+        <h2>考试词库</h2>
+        <span>共 ${grand.toLocaleString()} 个单词</span>
+      </div>
+      <p class="vocab-intro">按考试分级的英语单词，切换初中、高中、四级、六级、考研、托福、SAT，点开就能看词、看音标、听发音、看释义，轻松背单词。${LEVELS_SAMPLE ? '<strong class="vocab-sample-tip">（当前为示例词库，确认后会载入全部单词）</strong>' : ""}</p>
+      <div class="level-grid">${cards}</div>`;
   }
 
   /* ---------- deck shell ---------- */
@@ -497,5 +546,161 @@
     };
 
     build();
+  }
+
+  /* ---------- 考试词库：分级单词 ---------- */
+  function loadVocab(id) {
+    if (vocabCache[id]) return Promise.resolve(vocabCache[id]);
+    return fetch("data/" + id + ".json").then((r) => {
+      if (!r.ok) throw new Error("load fail");
+      return r.json();
+    }).then((j) => { vocabCache[id] = j; return j; });
+  }
+
+  function renderLevel(id) {
+    const level = levelById(id);
+    if (!level) { go("#/"); return; }
+    app.style.setProperty("--accent", level.color);
+    app.style.setProperty("--accent-tint", "#eef1f6");
+
+    const pills = LEVELS.map((l) =>
+      `<button class="vpill ${l.id === id ? "is-active" : ""}" data-level="${l.id}">${l.emoji} ${esc(l.name)}</button>`
+    ).join("");
+
+    app.innerHTML = `
+      <div class="deckbar">
+        <button class="back-btn" id="backHome">← 返回</button>
+        <span class="deck-chip"><span aria-hidden="true">${level.emoji}</span> ${esc(level.name)} · ${level.total} 词</span>
+      </div>
+      <div class="vocab-pills">${pills}</div>
+      <div class="play-area" id="varea"><p class="vloading">正在载入词库…</p></div>`;
+
+    app.querySelector("#backHome").addEventListener("click", () => go("#/"));
+    app.querySelectorAll(".vpill[data-level]").forEach((el) => {
+      el.addEventListener("click", () => { if (el.dataset.level !== id) go("#/level/" + el.dataset.level); });
+    });
+
+    const area = app.querySelector("#varea");
+    loadVocab(id).then((data) => vocabView(level, data, area))
+      .catch(() => { area.innerHTML = '<p class="vloading">词库载入失败，请刷新再试。</p>'; });
+  }
+
+  function vocabView(level, data, area) {
+    const learned = learnedSet(level.id);
+    const st = { view: "list", idx: 0, limit: 80, query: "" };
+
+    const phHtml = (w) => (w.p ? ' <span class="vph">/' + esc(w.p) + '/</span>' : "");
+    const progressText = () => "已学 " + learned.size + " / " + data.words.length + (data.total > data.words.length ? "（示例）" : "");
+
+    const shell = () => {
+      area.innerHTML = `
+        <div class="vocab-top">
+          <div class="vocab-toggle">
+            <button class="vtg ${st.view === "list" ? "is-active" : ""}" data-view="list">📖 列表</button>
+            <button class="vtg ${st.view === "card" ? "is-active" : ""}" data-view="card">🃏 卡片</button>
+          </div>
+          <span class="vocab-progress" id="vprog">${progressText()}</span>
+        </div>
+        <div id="vbody"></div>`;
+      area.querySelectorAll(".vtg").forEach((b) => b.addEventListener("click", () => {
+        st.view = b.dataset.view; shell();
+      }));
+      if (st.view === "list") paintList(); else paintCard();
+    };
+
+    const setProg = () => { const p = area.querySelector("#vprog"); if (p) p.textContent = progressText(); };
+    const toggleLearned = (word) => {
+      if (learned.has(word)) learned.delete(word); else learned.add(word);
+      saveLearned(level.id, learned); setProg();
+    };
+
+    /* 卡片模式 */
+    function paintCard() {
+      const body = area.querySelector("#vbody");
+      const w = data.words[st.idx];
+      const isL = learned.has(w.w);
+      body.innerHTML = `
+        <div class="vcard">
+          <div class="vcard-pos">${st.idx + 1} / ${data.words.length}</div>
+          <div class="vcard-word">${esc(w.w)}</div>
+          <div class="vcard-ph">${w.p ? "/" + esc(w.p) + "/" : ""}</div>
+          <button class="icon-btn speak-btn" id="vspeak" aria-label="朗读">🔊</button>
+          <button class="btn btn--ghost vreveal" id="vreveal">显示释义</button>
+          <div class="vcard-zh" id="vzh" hidden>${esc(w.t)}</div>
+        </div>
+        <div class="vcard-ctrl">
+          <button class="icon-btn" id="vprev" aria-label="上一个">◀</button>
+          <button class="btn ${isL ? "btn--sun" : "btn--accent"}" id="vknow">${isL ? "⭐ 已学会" : "✓ 学会了"}</button>
+          <button class="icon-btn" id="vnext" aria-label="下一个">▶</button>
+        </div>`;
+      const reveal = () => { const z = body.querySelector("#vzh"); z.hidden = false; };
+      body.querySelector("#vspeak").addEventListener("click", () => speak(w.w));
+      body.querySelector("#vreveal").addEventListener("click", reveal);
+      body.querySelector("#vprev").addEventListener("click", () => { st.idx = (st.idx - 1 + data.words.length) % data.words.length; paintCard(); });
+      body.querySelector("#vnext").addEventListener("click", () => { st.idx = (st.idx + 1) % data.words.length; paintCard(); });
+      body.querySelector("#vknow").addEventListener("click", () => {
+        toggleLearned(w.w);
+        if (st.idx < data.words.length - 1) { st.idx += 1; paintCard(); } else paintCard();
+      });
+      speak(w.w);
+    }
+
+    area._paintList = null;
+    shell();
+
+    /* 列表模式在下方 paintList 中实现 */
+    function paintList() { renderVocabList(area, data, st, learned, level, phHtml, toggleLearned); }
+  }
+
+  function renderVocabList(area, data, st, learned, level, phHtml, toggleLearned) {
+    const body = area.querySelector("#vbody");
+    body.innerHTML = `
+      <div class="vsearch">
+        <input type="search" id="vq" placeholder="🔍 搜索单词或中文…" value="${esc(st.query)}" autocomplete="off">
+      </div>
+      <div class="vcount" id="vcount"></div>
+      <div class="vlist" id="vlist"></div>
+      <div class="vmore" id="vmore"></div>`;
+
+    const q = () => st.query.trim().toLowerCase();
+    const filtered = () => {
+      const kw = q();
+      if (!kw) return data.words;
+      return data.words.filter((w) => w.w.toLowerCase().indexOf(kw) !== -1 || (w.t || "").toLowerCase().indexOf(kw) !== -1);
+    };
+
+    const rows = () => {
+      const list = filtered();
+      const shown = list.slice(0, st.limit);
+      area.querySelector("#vcount").textContent = "共 " + list.length + " 个单词" + (list.length > shown.length ? "，已显示 " + shown.length : "");
+      area.querySelector("#vlist").innerHTML = shown.map((w) => {
+        const isL = learned.has(w.w);
+        return `
+          <div class="vrow ${isL ? "is-learned" : ""}" data-w="${esc(w.w)}">
+            <button class="vrow-speak" data-speak="${esc(w.w)}" aria-label="朗读 ${esc(w.w)}">🔊</button>
+            <div class="vrow-main">
+              <div class="vrow-eng">${esc(w.w)}${phHtml(w)}</div>
+              <div class="vrow-zh">${esc(w.t)}</div>
+            </div>
+            <button class="vrow-mark" data-mark="${esc(w.w)}" aria-label="标记已学">${isL ? "✓" : "○"}</button>
+          </div>`;
+      }).join("");
+      const more = area.querySelector("#vmore");
+      more.innerHTML = list.length > shown.length ? '<button class="btn btn--ghost" id="vmorebtn">显示更多（还有 ' + (list.length - shown.length) + " 个）</button>" : "";
+      const mb = area.querySelector("#vmorebtn");
+      if (mb) mb.addEventListener("click", () => { st.limit += 120; rows(); });
+      area.querySelectorAll("#vlist .vrow-speak").forEach((b) => b.addEventListener("click", () => speak(b.dataset.speak)));
+      area.querySelectorAll("#vlist .vrow-mark").forEach((b) => b.addEventListener("click", () => {
+        toggleLearned(b.dataset.mark);
+        const row = b.closest(".vrow");
+        const now = learned.has(b.dataset.mark);
+        row.classList.toggle("is-learned", now);
+        b.textContent = now ? "✓" : "○";
+      }));
+    };
+
+    const input = body.querySelector("#vq");
+    input.addEventListener("input", () => { st.query = input.value; st.limit = 80; rows(); });
+    rows();
   }
 })();

@@ -289,3 +289,62 @@ button { font-family: inherit; cursor: pointer; }
   .options { grid-template-columns: 1fr; }
   .deck-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
 }
+
+/* 考试词库 · 首页分级卡片 */
+.vocab-intro { margin: 0 4px 16px; color: var(--muted); font-size: 14px; line-height: 1.7; }
+.vocab-sample-tip { color: var(--red); }
+.level-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: clamp(10px, 2vw, 16px); }
+.level-card {
+  display: flex; flex-direction: column; gap: 6px; text-align: left;
+  border: none; border-radius: 18px; padding: 16px 15px; color: #fff;
+  background: var(--c, var(--blue)); box-shadow: var(--shadow); min-height: 118px;
+  justify-content: space-between; transition: transform .1s ease, box-shadow .1s ease;
+}
+.level-card:hover { transform: translateY(-3px); }
+.level-card:active { transform: translate(3px, 3px); box-shadow: var(--shadow-press); }
+.level-emoji { font-size: 30px; }
+.level-body { display: grid; gap: 2px; }
+.level-title { font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: 18px; }
+.level-en { font-size: 12px; font-weight: 700; opacity: .9; }
+.level-meta { align-self: flex-start; background: rgba(255,255,255,.26); border-radius: 999px; padding: 3px 11px; font-size: 12px; font-weight: 700; }
+
+/* 词库页 */
+.vocab-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.vpill { border: 3px solid var(--line); background: #fff; color: var(--ink); border-radius: 999px; padding: 7px 13px; font-weight: 700; font-size: 13px; }
+.vpill.is-active { border-color: var(--accent); background: var(--accent); color: #fff; }
+.vloading { text-align: center; color: var(--muted); padding: 40px 0; font-weight: 600; }
+.vocab-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+.vocab-toggle { display: inline-flex; gap: 8px; }
+.vtg { border: 3px solid var(--line); background: #fff; color: var(--ink); border-radius: 12px; padding: 8px 14px; font-weight: 700; font-size: 14px; }
+.vtg.is-active { border-color: var(--accent); background: var(--accent-tint); color: var(--accent); }
+.vocab-progress { color: var(--muted); font-weight: 700; font-size: 14px; }
+
+/* 卡片模式 */
+.vcard { text-align: center; padding: 14px 10px 8px; }
+.vcard-pos { color: var(--muted); font-weight: 700; font-size: 13px; }
+.vcard-word { font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: clamp(34px, 9vw, 60px); margin: 8px 0 2px; word-break: break-word; }
+.vcard-ph { color: var(--muted); font-size: 19px; min-height: 24px; }
+.vcard .speak-btn { margin: 12px auto 0; }
+.vcard .vreveal { display: inline-block; margin: 14px auto 0; }
+.vcard-zh { margin: 16px auto 0; max-width: 640px; font-size: clamp(17px, 3.6vw, 21px); font-weight: 700; color: var(--ink); line-height: 1.7; }
+.vcard-ctrl { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 20px; }
+
+/* 列表模式 */
+.vsearch { margin-bottom: 12px; }
+.vsearch input { width: 100%; border: 3px solid var(--line); border-radius: 14px; padding: 12px 15px; font-size: 16px; font-family: inherit; background: #fff; color: var(--ink); }
+.vsearch input:focus { outline: none; border-color: var(--accent); }
+.vcount { color: var(--muted); font-size: 13px; font-weight: 600; margin-bottom: 10px; }
+.vlist { display: grid; gap: 8px; }
+.vrow { display: flex; align-items: center; gap: 12px; padding: 11px 13px; border: 2px solid var(--line); border-radius: 14px; background: #fff; }
+.vrow.is-learned { border-color: var(--green); background: #f1fbf5; }
+.vrow-speak { flex: 0 0 auto; width: 40px; height: 40px; border: none; border-radius: 50%; background: var(--accent-tint); color: var(--accent); font-size: 17px; box-shadow: var(--shadow-press); }
+.vrow-main { flex: 1; min-width: 0; }
+.vrow-eng { font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: 18px; }
+.vrow-eng .vph { font-family: inherit; font-weight: 600; font-size: 13px; color: var(--muted); margin-left: 6px; }
+.vrow-zh { color: #4b4752; font-size: 14px; line-height: 1.5; margin-top: 2px; }
+.vrow-mark { flex: 0 0 auto; width: 38px; height: 38px; border: 2px solid var(--line); border-radius: 50%; background: #fff; color: var(--muted); font-size: 18px; font-weight: 800; }
+.vrow.is-learned .vrow-mark { border-color: var(--green); background: var(--green); color: #fff; }
+.vmore { text-align: center; margin-top: 16px; }
+
+@media (max-width: 760px) { .level-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 480px) { .level-grid { grid-template-columns: repeat(2, 1fr); } .vocab-progress { width: 100%; } }
