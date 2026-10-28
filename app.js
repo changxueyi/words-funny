@@ -95,6 +95,11 @@
       window.speechSynthesis.speak(u);
     } catch (e) { /* ignore */ }
   };
+  const bindExampleAudio = (root) => {
+    root.querySelectorAll("[data-speak-example]").forEach((button) => {
+      button.addEventListener("click", () => speak(button.dataset.speakExample));
+    });
+  };
 
   /* ---------- sound toggle ---------- */
   const syncSoundBtn = () => {
@@ -202,25 +207,35 @@
   function levelsSection() {
     if (!LEVELS.length) return "";
     const grand = LEVELS.reduce((n, l) => n + (l.total || 0), 0);
-    const cards = LEVELS.map((l) => {
-      const learned = learnedSet(l.id).size;
-      return `
-        <button class="level-card" style="--c:${l.color}" data-level="${l.id}">
-          <span class="level-emoji" aria-hidden="true">${l.emoji}</span>
-          <span class="level-body">
-            <span class="level-title">${esc(l.name)}</span>
-            <span class="level-en">${esc(l.en)} · ${l.total} 词</span>
-          </span>
-          <span class="level-meta">${learned ? "已学 " + learned : "开始学"}</span>
-        </button>`;
+    const groups = [
+      { name: "学段基础", hint: "初中 · 高中" },
+      { name: "升学与留学考试", hint: "四级 · 六级 · 考研 · 托福 · SAT" }
+    ].map((group) => {
+      const cards = LEVELS.filter((l) => l.category === group.name).map((l) => {
+        const learned = learnedSet(l.id).size;
+        return `
+          <button class="level-card" style="--c:${l.color}" data-level="${l.id}">
+            <span class="level-emoji" aria-hidden="true">${l.emoji}</span>
+            <span class="level-body">
+              <span class="level-title">${esc(l.name)}</span>
+              <span class="level-en">${esc(l.en)} · ${l.total.toLocaleString()} 词</span>
+            </span>
+            <span class="level-meta">${learned ? "已学 " + learned : "开始学"}</span>
+          </button>`;
+      }).join("");
+      return cards ? `
+        <section class="level-group ${group.name === "升学与留学考试" ? "level-group--exam" : ""}">
+          <div class="level-group-head"><h3>${group.name}</h3><span>${group.hint}</span></div>
+          <div class="level-grid">${cards}</div>
+        </section>` : "";
     }).join("");
     return `
       <div class="sec-head" id="vocab">
-        <h2>考试词库</h2>
+        <h2>分级词库</h2>
         <span>共 ${grand.toLocaleString()} 个单词</span>
       </div>
-      <p class="vocab-intro">按考试分级的英语单词，切换初中、高中、四级、六级、考研、托福、SAT，点开就能看词、看音标、听发音、看释义，轻松背单词。${LEVELS_SAMPLE ? '<strong class="vocab-sample-tip">（当前为示例词库，确认后会载入全部单词）</strong>' : ""}</p>
-      <div class="level-grid">${cards}</div>`;
+      <p class="vocab-intro">按学段与考试分类，选择级别后按需载入词表；包含美式音标、中文释义和精选例句。${LEVELS_SAMPLE ? '<strong class="vocab-sample-tip">（当前为示例词库）</strong>' : ""}</p>
+      <div class="level-groups">${groups}</div>`;
   }
 
   /* ---------- deck shell ---------- */
@@ -626,7 +641,15 @@
           <div class="vcard-ph">${w.p ? "/" + esc(w.p) + "/" : ""}</div>
           <button class="icon-btn speak-btn" id="vspeak" aria-label="朗读">🔊</button>
           <button class="btn btn--ghost vreveal" id="vreveal">显示释义</button>
-          <div class="vcard-zh" id="vzh" hidden>${esc(w.t)}</div>
+          <div class="vcard-zh" id="vzh" hidden>
+            <div>${esc(w.t)}</div>
+            ${w.e ? `
+              <div class="vcard-example">
+                <p class="vexample-en">${esc(w.e.en)}</p>
+                <button class="vexample-play" type="button" data-speak-example="${esc(w.e.en)}">🔊 朗读例句</button>
+                <p class="vexample-cn">${esc(w.e.cn)}</p>
+              </div>` : ""}
+          </div>
         </div>
         <div class="vcard-ctrl">
           <button class="icon-btn" id="vprev" aria-label="上一个">◀</button>
@@ -635,6 +658,7 @@
         </div>`;
       const reveal = () => { const z = body.querySelector("#vzh"); z.hidden = false; };
       body.querySelector("#vspeak").addEventListener("click", () => speak(w.w));
+      bindExampleAudio(body);
       body.querySelector("#vreveal").addEventListener("click", reveal);
       body.querySelector("#vprev").addEventListener("click", () => { st.idx = (st.idx - 1 + data.words.length) % data.words.length; paintCard(); });
       body.querySelector("#vnext").addEventListener("click", () => { st.idx = (st.idx + 1) % data.words.length; paintCard(); });
@@ -666,7 +690,11 @@
     const filtered = () => {
       const kw = q();
       if (!kw) return data.words;
-      return data.words.filter((w) => w.w.toLowerCase().indexOf(kw) !== -1 || (w.t || "").toLowerCase().indexOf(kw) !== -1);
+      return data.words.filter((w) =>
+        w.w.toLowerCase().indexOf(kw) !== -1
+        || (w.t || "").toLowerCase().indexOf(kw) !== -1
+        || (w.e && ((w.e.en || "").toLowerCase().indexOf(kw) !== -1 || (w.e.cn || "").toLowerCase().indexOf(kw) !== -1))
+      );
     };
 
     const rows = () => {
@@ -681,6 +709,13 @@
             <div class="vrow-main">
               <div class="vrow-eng">${esc(w.w)}${phHtml(w)}</div>
               <div class="vrow-zh">${esc(w.t)}</div>
+              ${w.e ? `
+                <details class="vrow-example">
+                  <summary>例句</summary>
+                  <p class="vexample-en">${esc(w.e.en)}</p>
+                  <button class="vexample-play" type="button" data-speak-example="${esc(w.e.en)}">🔊 朗读例句</button>
+                  <p class="vexample-cn">${esc(w.e.cn)}</p>
+                </details>` : ""}
             </div>
             <button class="vrow-mark" data-mark="${esc(w.w)}" aria-label="标记已学">${isL ? "✓" : "○"}</button>
           </div>`;
@@ -690,6 +725,7 @@
       const mb = area.querySelector("#vmorebtn");
       if (mb) mb.addEventListener("click", () => { st.limit += 120; rows(); });
       area.querySelectorAll("#vlist .vrow-speak").forEach((b) => b.addEventListener("click", () => speak(b.dataset.speak)));
+      bindExampleAudio(area);
       area.querySelectorAll("#vlist .vrow-mark").forEach((b) => b.addEventListener("click", () => {
         toggleLearned(b.dataset.mark);
         const row = b.closest(".vrow");

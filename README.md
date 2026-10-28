@@ -1,6 +1,6 @@
 # 开心学单词 · WordsFunny
 
-一个免费、原创、面向孩子的趣味英语单词学习平台。纯静态 HTML / CSS / JavaScript，无需后端，部署到 GitHub Pages 即可直接在线游玩，手机、平板、电脑都适配。
+一个免费、面向不同年龄学习者的英语单词学习平台。纯静态 HTML / CSS / JavaScript，无需后端，部署到 GitHub Pages 即可使用，手机、平板、电脑都适配。
 
 在线体验：<https://changxueyi.github.io/words-funny/>
 
@@ -19,13 +19,14 @@
 
 ## 考试词库（分级单词）
 
-除了面向低龄孩子的主题单词书，首页下方新增「考试词库」板块，支持切换 **初中 / 高中 / 四级 CET4 / 六级 CET6 / 考研 / 托福 TOEFL / SAT** 七个级别，覆盖约 5.4 万个常用单词。这一部分不做游戏化，专注轻松背词：
+除了面向低龄孩子的主题单词书，首页还提供按「学段基础」与「升学和留学考试」整理的分级词库：**初中 / 高中 / 四级 CET4 / 六级 CET6 / 考研 / 托福 TOEFL / SAT**，共 54,356 条。这一部分不做游戏化，专注轻松背词：
 
-- **列表模式**：按词表浏览，每个单词带音标、释义与朗读按钮，可搜索、可标记「已学」。
-- **卡片模式**：一次一个单词，先看词、听发音，再点开释义自测。
+- **列表模式**：按词表浏览，美式音标、中文释义和朗读一目了然；例句默认折叠，可搜索单词、释义和例句，可标记「已学」。
+- **卡片模式**：一次一个单词，先看词、听发音，再展开释义和例句；可朗读例句。
+- **按需加载**：主页只读取级别清单；点击某一级后，才加载对应的独立数据文件。
 - 学习进度按级别保存在本地浏览器。
 
-词库数据来源于开源项目 [english-vocabulary](https://github.com/)（中英文对照词库），经脚本 `tools/gen_vocab.py` 处理为紧凑的分级 JSON 放在 `data/` 下，按需加载。
+词库数据整理自 [KyleBing/english-vocabulary](https://github.com/KyleBing/english-vocabulary)，原始数据采用 BSD 3-Clause License。页面仅使用美式音标字段，不以英式音标补缺；词条例句来自该项目提供的例句数据。生成脚本 `tools/gen_vocab.py` 将其处理为 `data/` 下七个紧凑 JSON 文件。数据许可文本见 [DATA-LICENSE](DATA-LICENSE)。
 
 ## 本地运行
 
@@ -39,4 +40,4 @@ python3 -m http.server 8000
 
 ## 致谢与许可
 
-灵感来源于开源项目 [WordsFunny](https://github.com/SteveSuv/remix-words-funny)（MIT）。本仓库的单词内容、界面设计、交互与小游戏为重新设计实现，代码以 MIT License 发布。
+本项目部分互动玩法参考 [WordsFunny](https://github.com/SteveSuv/remix-words-funny)（MIT）；本站代码以 MIT License 发布。考试分级词库按其各自的数据许可单独标注，详见 [DATA-LICENSE](DATA-LICENSE)。

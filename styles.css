@@ -293,7 +293,12 @@ button { font-family: inherit; cursor: pointer; }
 /* 考试词库 · 首页分级卡片 */
 .vocab-intro { margin: 0 4px 16px; color: var(--muted); font-size: 14px; line-height: 1.7; }
 .vocab-sample-tip { color: var(--red); }
+.level-groups { display: grid; gap: 24px; }
+.level-group-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 0 2px 10px; }
+.level-group-head h3 { margin: 0; font-size: 17px; }
+.level-group-head span { color: var(--muted); font-size: 13px; }
 .level-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: clamp(10px, 2vw, 16px); }
+.level-group--exam .level-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 .level-card {
   display: flex; flex-direction: column; gap: 6px; text-align: left;
   border: none; border-radius: 18px; padding: 16px 15px; color: #fff;
@@ -327,6 +332,10 @@ button { font-family: inherit; cursor: pointer; }
 .vcard .speak-btn { margin: 12px auto 0; }
 .vcard .vreveal { display: inline-block; margin: 14px auto 0; }
 .vcard-zh { margin: 16px auto 0; max-width: 640px; font-size: clamp(17px, 3.6vw, 21px); font-weight: 700; color: var(--ink); line-height: 1.7; }
+.vcard-example { margin: 14px auto 0; padding-top: 12px; border-top: 1px solid var(--line); font-size: 15px; }
+.vexample-en { margin: 0; color: var(--ink); font-weight: 600; line-height: 1.55; }
+.vexample-play { min-height: 36px; margin: 4px 0; padding: 3px 8px; border: 0; border-radius: 8px; color: var(--accent); background: var(--accent-tint); font: inherit; font-size: 13px; font-weight: 700; }
+.vexample-cn { margin: 2px 0 0; color: var(--muted); font-size: 14px; font-weight: 500; line-height: 1.55; }
 .vcard-ctrl { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 20px; }
 
 /* 列表模式 */
@@ -335,16 +344,33 @@ button { font-family: inherit; cursor: pointer; }
 .vsearch input:focus { outline: none; border-color: var(--accent); }
 .vcount { color: var(--muted); font-size: 13px; font-weight: 600; margin-bottom: 10px; }
 .vlist { display: grid; gap: 8px; }
-.vrow { display: flex; align-items: center; gap: 12px; padding: 11px 13px; border: 2px solid var(--line); border-radius: 14px; background: #fff; }
+.vrow { display: flex; align-items: flex-start; gap: 12px; padding: 11px 13px; border: 2px solid var(--line); border-radius: 14px; background: #fff; }
 .vrow.is-learned { border-color: var(--green); background: #f1fbf5; }
 .vrow-speak { flex: 0 0 auto; width: 40px; height: 40px; border: none; border-radius: 50%; background: var(--accent-tint); color: var(--accent); font-size: 17px; box-shadow: var(--shadow-press); }
 .vrow-main { flex: 1; min-width: 0; }
 .vrow-eng { font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: 18px; }
 .vrow-eng .vph { font-family: inherit; font-weight: 600; font-size: 13px; color: var(--muted); margin-left: 6px; }
 .vrow-zh { color: #4b4752; font-size: 14px; line-height: 1.5; margin-top: 2px; }
+.vrow-example { margin-top: 6px; font-size: 13px; line-height: 1.5; }
+.vrow-example summary { width: fit-content; color: var(--accent); cursor: pointer; font-weight: 700; }
+.vrow-example[open] summary { margin-bottom: 5px; }
+.vrow-example .vexample-en { font-size: 13px; }
+.vrow-example .vexample-cn { font-size: 13px; }
+.vrow-example .vexample-play { min-height: 32px; margin: 2px 0; font-size: 12px; }
 .vrow-mark { flex: 0 0 auto; width: 38px; height: 38px; border: 2px solid var(--line); border-radius: 50%; background: #fff; color: var(--muted); font-size: 18px; font-weight: 800; }
 .vrow.is-learned .vrow-mark { border-color: var(--green); background: var(--green); color: #fff; }
 .vmore { text-align: center; margin-top: 16px; }
 
-@media (max-width: 760px) { .level-grid { grid-template-columns: repeat(3, 1fr); } }
-@media (max-width: 480px) { .level-grid { grid-template-columns: repeat(2, 1fr); } .vocab-progress { width: 100%; } }
+@media (max-width: 760px) {
+  .level-grid,
+  .level-group--exam .level-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 480px) {
+  .level-grid,
+  .level-group--exam .level-grid { grid-template-columns: repeat(2, 1fr); }
+  .vocab-progress { width: 100%; }
+  .level-group-head { align-items: flex-start; flex-direction: column; gap: 2px; }
+  .vrow { gap: 8px; padding: 10px; }
+  .vrow-speak { width: 36px; height: 36px; }
+  .vrow-mark { width: 34px; height: 34px; }
+}
